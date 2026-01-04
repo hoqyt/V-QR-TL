@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>VietQR Tool</title>
+<meta charset="UTF-8">
+</head>
+
+<body>
+<h2>VietQR Generator</h2>
+
+<label>Số tiền:</label>
+<input id="money" placeholder="Nhập số tiền">
+<button onclick="gen()">Tạo QR</button>
+
+<br><br>
+
+<img id="qr" width="350">
+
+<script>
+function gen() {
+    let money = document.getElementById("money").value;
+
+    money = money.replace(/\./g,"").replace(/,/g,"");
+
+    let bank = "970403";
+    let account = "054601092000";
+    let info = "NAP NET";
+    let name = "HUYNH CHANH THUAT";
+
+    let url =
+      `https://img.vietqr.io/image/${bank}-${account}-print.png?amount=${money}&addInfo=${encodeURIComponent(info)}&accountName=${encodeURIComponent(name)}`;
+
+    document.getElementById("qr").src = url;
+}
+</script>
+
+</body>
+</html>
