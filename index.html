@@ -3,21 +3,86 @@
 <head>
 <meta charset="UTF-8">
 <title>VietQR Generator</title>
+
 <style>
 body { font-family: Arial; }
-input, select { padding: 6px; margin: 3px; }
-button { padding: 8px 15px; cursor: pointer; }
-img { border: 1px solid #ccc; margin-top: 10px; }
+
+input, select {
+  padding: 6px;
+  margin: 4px;
+}
+
+button {
+  padding: 8px 15px;
+  cursor: pointer;
+}
+
+img {
+  border: 1px solid #ccc;
+  margin-top: 10px;
+}
+
+/* Ô bí mật */
+#secretBox{
+  width:25px;
+  height:25px;
+  background:white;
+  border:1px solid #ccc;
+  position:fixed;
+  top:10px;
+  left:10px;
+  cursor:pointer;
+}
+
+/* Ô nhập pass */
+#passPopup{
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  background:white;
+  padding:20px;
+  border:1px solid #ccc;
+  display:none;
+}
+
+#adminPanel{
+  display:none;
+  margin-top:10px;
+  padding:10px;
+  border:1px dashed #aaa;
+}
 </style>
 </head>
 
 <body>
 
+<div id="secretBox" title="Click để mở khóa"></div>
+
+<div id="passPopup">
+  <h4>Nhập mật khẩu chỉnh sửa</h4>
+  <input type="password" id="passInput">
+  <button onclick="checkPass()">OK</button>
+  <button onclick="closePass()">Hủy</button>
+</div>
+
 <h2>VietQR Generator</h2>
+
+<!-- ADMIN - chỉnh bank + stk -->
+<div id="adminPanel">
+  <h3>Chế độ quản trị</h3>
+
+  <label>Ngân hàng:</label>
+  <select id="bankSelect"></select>
+
+  <br>
+
+  <label>Số tài khoản:</label>
+  <input id="accountInput" value="054601092000">
+</div>
 
 <label>Số tiền:</label>
 <input id="money" placeholder="VD: 300000">
-
 <label><input type="checkbox" id="useMoney" checked> Gắn số tiền</label>
 <br>
 
@@ -29,6 +94,7 @@ img { border: 1px solid #ccc; margin-top: 10px; }
 <label>Tên tài khoản:</label>
 <input id="name" value="HUYNH CHANH THUAT">
 <label><input type="checkbox" id="useName" checked> Gắn tên</label>
+
 <br>
 
 <label>Kiểu hiển thị:</label>
@@ -38,6 +104,7 @@ img { border: 1px solid #ccc; margin-top: 10px; }
 </select>
 
 <br><br>
+
 <button onclick="gen()">Tạo QR</button>
 <button onclick="downloadImg()">Tải ảnh</button>
 
@@ -45,46 +112,99 @@ img { border: 1px solid #ccc; margin-top: 10px; }
 <img id="qr" width="450">
 
 <script>
+
+let PASS = "123456";
+let currentUrl = "";
 let bank = "970403";
 let account = "054601092000";
 
+/*** SECRET CLICK BOX ***/
+document.getElementById("secretBox").onclick = ()=> {
+  document.getElementById("passPopup").style.display = "block";
+};
+
+function closePass(){
+  document.getElementById("passPopup").style.display = "none";
+}
+
+function checkPass(){
+  let p = document.getElementById("passInput").value;
+  if(p === PASS){
+    document.getElementById("adminPanel").style.display = "block";
+    alert("Đã mở khóa chỉnh sửa!");
+  } else {
+    alert("Sai mật khẩu!");
+  }
+  closePass();
+}
+
+/*** LOAD BANK LIST FROM VIETQR API ***/
+async function loadBanks(){
+  try{
+    let res = await fetch("https://api.vietqr.io/v2/banks");
+    let data = await res.json();
+
+    let select = document.getElementById("bankSelect");
+    data.data.forEach(b=>{
+      let opt = document.createElement("option");
+      opt.value = b.bin;
+      opt.text = b.shortName + " - " + b.name;
+      if(b.bin === bank) opt.selected = true;
+      select.appendChild(opt);
+    });
+
+    select.onchange = ()=>{
+      bank = select.value;
+    };
+
+  }catch(e){
+    alert("Không tải được danh sách ngân hàng!");
+  }
+}
+
+loadBanks();
+
+/*** GENERATE QR ***/
 function gen() {
-    let money = document.getElementById("money").value.trim();
-    money = money.replace(/\./g,"").replace(/,/g,"");
 
-    let info = document.getElementById("info").value;
-    let name = document.getElementById("name").value;
+  account = document.getElementById("accountInput").value;
 
-    let useMoney = document.getElementById("useMoney").checked;
-    let useInfo  = document.getElementById("useInfo").checked;
-    let useName  = document.getElementById("useName").checked;
+  let money = document.getElementById("money").value.trim();
+  money = money.replace(/\./g,"").replace(/,/g,"");
 
-    let style = document.getElementById("style").value;
+  let info = document.getElementById("info").value;
+  let name = document.getElementById("name").value;
 
-    let url = `https://img.vietqr.io/image/${bank}-${account}-${style}.png?`;
+  let useMoney = document.getElementById("useMoney").checked;
+  let useInfo  = document.getElementById("useInfo").checked;
+  let useName  = document.getElementById("useName").checked;
 
-    if(useMoney && money !== "")
-        url += `amount=${money}&`;
+  let style = document.getElementById("style").value;
 
-    if(useInfo && info !== "")
-        url += `addInfo=${encodeURIComponent(info)}&`;
+  let url = `https://img.vietqr.io/image/${bank}-${account}-${style}.png?`;
 
-    if(useName && name !== "")
-        url += `accountName=${encodeURIComponent(name)}&`;
+  if(useMoney && money !== "")
+      url += `amount=${money}&`;
 
-    document.getElementById("qr").src = url;
-    currentUrl = url;
+  if(useInfo && info !== "")
+      url += `addInfo=${encodeURIComponent(info)}&`;
+
+  if(useName && name !== "")
+      url += `accountName=${encodeURIComponent(name)}&`;
+
+  currentUrl = url;
+  document.getElementById("qr").src = url;
 }
 
-let currentUrl = "";
-
+/*** DOWNLOAD ***/
 function downloadImg() {
-    if (!currentUrl) return alert("Chưa tạo QR");
-    const a = document.createElement("a");
-    a.href = currentUrl;
-    a.download = "vietqr.png";
-    a.click();
+  if (!currentUrl) return alert("Chưa tạo QR");
+  const a = document.createElement("a");
+  a.href = currentUrl;
+  a.download = "vietqr.png";
+  a.click();
 }
+
 </script>
 
 </body>
