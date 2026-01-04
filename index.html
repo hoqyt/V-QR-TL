@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>VietQR Tool</title>
-
 <style>
 body{
     font-family: Arial;
@@ -14,11 +13,11 @@ body{
     min-height: 100vh;
 }
 .container{
-    width:450px;
+    width:480px;
     margin:50px auto;
     background:#1c1c1c;
-    padding:15px;
-    border-radius:10px;
+    padding:20px;
+    border-radius:12px;
 }
 input,select{
     width:100%;
@@ -26,13 +25,17 @@ input,select{
     margin:5px 0;
     border-radius:6px;
     border:none;
+    background:#222;
+    color:white;
 }
 button{
-    padding:8px 12px;
+    padding:10px 15px;
     border-radius:6px;
     border:none;
     cursor:pointer;
-    margin-top:5px;
+    margin-top:10px;
+    background:#00aaff;
+    color:white;
 }
 #adminBox{
     display:none;
@@ -45,22 +48,23 @@ button{
     position:absolute;
     top:15px;
     right:15px;
-    width:20px;
-    height:20px;
+    width:25px;
+    height:25px;
     background:white;
     border-radius:4px;
     cursor:pointer;
 }
 img{
-    margin-top:10px;
+    margin-top:15px;
     border-radius:10px;
+    max-width: 100%;
 }
 label{
     display:block;
     margin-top:5px;
+    cursor:pointer;
 }
 </style>
-
 </head>
 <body>
 
@@ -81,7 +85,7 @@ label{
 <label><input type="checkbox" id="hideAmount"> Ẩn số tiền</label>
 <label><input type="checkbox" id="hideAccount"> Ẩn số tài khoản</label>
 
-<button onclick="createQR()">Tạo mã</button>
+<button onclick="createQR()">Tạo mã QR</button>
 
 <div id="result"></div>
 
@@ -91,15 +95,12 @@ label{
     <button onclick="hideAdmin()">Ẩn Admin</button>
 </div>
 
-</div>
-
 <script>
 const passKey = "123456"; // Pass admin — KHÔNG lưu đâu cả
 
 // Khi nhấn nút bí mật
 function enterPass(){
     let p = prompt("Nhập mật khẩu:");
-
     if(p === passKey){
         alert("Đúng mật khẩu! Bạn có thể chỉnh Bank & STK");
         document.getElementById("bank").disabled = false;
@@ -139,7 +140,7 @@ loadBanks();
 // Tạo QR
 function createQR(){
     let bank = document.getElementById("bank").value;
-    let acc = document.getElementById("account").value;
+    let acc = document.getElementById("account").value.trim();
     let money = document.getElementById("amount").value.trim();
     let info = document.getElementById("info").value;
     let name = document.getElementById("name").value;
@@ -150,11 +151,20 @@ function createQR(){
     if(hideAccount) acc = "";
     if(hideAmount) money = "";
 
-    let url = `https://img.vietqr.io/image/${bank}-${acc}-print.png?addInfo=${encodeURIComponent(info)}&accountName=${encodeURIComponent(name)}`;
+    // Không cho bỏ cả 2
+    if(acc === "" && money === ""){
+        alert("Không thể bỏ cả số tài khoản và số tiền!");
+        return;
+    }
+
+    // Chọn compact.png nếu bỏ account hoặc amount
+    let fileType = (hideAccount || hideAmount) ? "compact.png" : "print.png";
+
+    let url = `https://img.vietqr.io/image/${bank}-${acc}-${fileType}?addInfo=${encodeURIComponent(info)}&accountName=${encodeURIComponent(name)}`;
     if(money !== "") url += `&amount=${money}`;
 
     document.getElementById("result").innerHTML =
-        `<img src="${url}" width="350">
+        `<img src="${url}" width="400">
          <br>
          <a href="${url}" download="vietqr.png">
             <button>Tải ảnh</button>
