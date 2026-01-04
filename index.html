@@ -10,10 +10,12 @@ body{
     background:#111;
     color:white;
     text-align:center;
+    position: relative;
+    min-height: 100vh;
 }
 .container{
     width:450px;
-    margin:auto;
+    margin:50px auto;
     background:#1c1c1c;
     padding:15px;
     border-radius:10px;
@@ -30,6 +32,7 @@ button{
     border-radius:6px;
     border:none;
     cursor:pointer;
+    margin-top:5px;
 }
 #adminBox{
     display:none;
@@ -52,26 +55,31 @@ img{
     margin-top:10px;
     border-radius:10px;
 }
+label{
+    display:block;
+    margin-top:5px;
+}
 </style>
 
 </head>
 <body>
 
+<!-- Nút bí mật nhập pass -->
 <div id="secretBtn" onclick="enterPass()"></div>
 
 <h2>🚀 VietQR Generator</h2>
 
 <div class="container">
 
-<select id="bank"></select>
-<input id="account" placeholder="Số tài khoản" value="054601092000">
+<select id="bank" disabled></select>
+<input id="account" disabled placeholder="Số tài khoản" value="054601092000">
 
 <input id="amount" placeholder="Số tiền (vd 300000)">
 <input id="info" placeholder="Nội dung" value="NAP NET">
 <input id="name" placeholder="Tên thụ hưởng" value="HUYNH CHANH THUAT">
 
-<label><input type="checkbox" id="hideAmount"> Ẩn số tiền</label><br>
-<label><input type="checkbox" id="hideAccount"> Ẩn số tài khoản</label><br>
+<label><input type="checkbox" id="hideAmount"> Ẩn số tiền</label>
+<label><input type="checkbox" id="hideAccount"> Ẩn số tài khoản</label>
 
 <button onclick="createQR()">Tạo mã</button>
 
@@ -79,23 +87,28 @@ img{
 
 <div id="adminBox">
     <h3>Admin Settings</h3>
-    <p>Chỉnh ngân hàng + STK</p>
-    <button onclick="hideAdmin()">Ẩn</button>
+    <p>Bật chỉnh Bank + STK</p>
+    <button onclick="hideAdmin()">Ẩn Admin</button>
 </div>
 
 </div>
 
 <script>
+const passKey = "123456"; // Pass admin — KHÔNG lưu đâu cả
 
-const passKey = "123456"; // PASS — không lưu, chỉ kiểm tra 1 lần
-
+// Khi nhấn nút bí mật
 function enterPass(){
     let p = prompt("Nhập mật khẩu:");
+
     if(p === passKey){
-        alert("Đúng mật khẩu!");
+        alert("Đúng mật khẩu! Bạn có thể chỉnh Bank & STK");
+        document.getElementById("bank").disabled = false;
+        document.getElementById("account").disabled = false;
         document.getElementById("adminBox").style.display="block";
     }else{
         alert("Sai mật khẩu!");
+        document.getElementById("bank").disabled = true;
+        document.getElementById("account").disabled = true;
         document.getElementById("adminBox").style.display="none";
     }
 }
@@ -104,20 +117,22 @@ function hideAdmin(){
     document.getElementById("adminBox").style.display="none";
 }
 
-// Load danh sách ngân hàng
+// Load danh sách ngân hàng từ VietQR
 async function loadBanks(){
-    let res = await fetch("https://api.vietqr.io/v2/banks");
-    let js = await res.json();
-
-    let select = document.getElementById("bank");
-    js.data.forEach(b=>{
-        let op = document.createElement("option");
-        op.value = b.bin;
-        op.text = b.short_name + " - " + b.name;
-        select.appendChild(op);
-    });
-
-    select.value = "970403"; // Sacombank default
+    try{
+        let res = await fetch("https://api.vietqr.io/v2/banks");
+        let js = await res.json();
+        let select = document.getElementById("bank");
+        js.data.forEach(b=>{
+            let op = document.createElement("option");
+            op.value = b.bin;
+            op.text = b.short_name + " - " + b.name;
+            select.appendChild(op);
+        });
+        select.value = "970403"; // Sacombank mặc định
+    }catch(err){
+        console.error("Không tải được danh sách ngân hàng:", err);
+    }
 }
 loadBanks();
 
@@ -125,7 +140,7 @@ loadBanks();
 function createQR(){
     let bank = document.getElementById("bank").value;
     let acc = document.getElementById("account").value;
-    let money = document.getElementById("amount").value;
+    let money = document.getElementById("amount").value.trim();
     let info = document.getElementById("info").value;
     let name = document.getElementById("name").value;
 
@@ -133,11 +148,10 @@ function createQR(){
     let hideAccount = document.getElementById("hideAccount").checked;
 
     if(hideAccount) acc = "";
+    if(hideAmount) money = "";
 
     let url = `https://img.vietqr.io/image/${bank}-${acc}-print.png?addInfo=${encodeURIComponent(info)}&accountName=${encodeURIComponent(name)}`;
-
-    if(!hideAmount && money.trim() !== "")
-        url += `&amount=${money}`;
+    if(money !== "") url += `&amount=${money}`;
 
     document.getElementById("result").innerHTML =
         `<img src="${url}" width="350">
