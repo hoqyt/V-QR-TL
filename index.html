@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>VietQR Tool</title>
+
 <style>
 body{
     font-family: Arial;
@@ -68,6 +69,7 @@ label{
 </head>
 <body>
 
+<!-- nút bí mật -->
 <div id="secretBtn" onclick="enterPass()"></div>
 
 <h2>🚀 VietQR Generator</h2>
@@ -95,46 +97,60 @@ label{
     <button onclick="hideAdmin()">Ẩn Admin</button>
 </div>
 
+</div>
+
 <script>
 
 const passKey = "0546112";
 
+// nhập pass
 function enterPass(){
     let p = prompt("Nhập mật khẩu:");
+    const bank = document.getElementById("bank");
+    const account = document.getElementById("account");
+    const adminBox = document.getElementById("adminBox");
+
     if(p === passKey){
         alert("Đúng mật khẩu! Bạn có thể chỉnh Bank & STK");
         bank.disabled = false;
         account.disabled = false;
-        adminBox.style.display="block";
+        adminBox.style.display = "block";
     }else{
         alert("Sai mật khẩu!");
         bank.disabled = true;
         account.disabled = true;
-        adminBox.style.display="none";
+        adminBox.style.display = "none";
     }
 }
 
 function hideAdmin(){
-    adminBox.style.display="none";
+    document.getElementById("adminBox").style.display="none";
 }
 
+// load danh sách bank
 async function loadBanks(){
     try{
         let res = await fetch("https://api.vietqr.io/v2/banks");
         let js = await res.json();
+        let bankSelect = document.getElementById("bank");
+
         js.data.forEach(b=>{
             let op = document.createElement("option");
             op.value = b.bin;
             op.text = b.short_name + " - " + b.name;
-            bank.appendChild(op);
+            bankSelect.appendChild(op);
         });
-        bank.value = "970403";
-    }catch(err){
-        console.error("Không tải được danh sách ngân hàng");
+
+        bankSelect.value = "970403"; // mặc định Sacombank
+    }
+    catch(err){
+        console.error("Không tải được danh sách ngân hàng", err);
     }
 }
 loadBanks();
 
+
+// tạo qr
 function createQR(){
     let bank = document.getElementById("bank").value;
     let acc = document.getElementById("account").value.trim();
@@ -169,6 +185,7 @@ function createQR(){
         <button>Tải ảnh</button>
      </a>`;
 }
+
 </script>
 
 </body>
