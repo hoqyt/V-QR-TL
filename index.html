@@ -68,7 +68,6 @@ label{
 </head>
 <body>
 
-<!-- Nút bí mật nhập pass -->
 <div id="secretBtn" onclick="enterPass()"></div>
 
 <h2>🚀 VietQR Generator</h2>
@@ -84,6 +83,7 @@ label{
 
 <label><input type="checkbox" id="hideAmount"> Ẩn số tiền</label>
 <label><input type="checkbox" id="hideAccount"> Ẩn số tài khoản</label>
+<label><input type="checkbox" id="hideInfo"> Ẩn nội dung</label>
 
 <button onclick="createQR()">Tạo mã QR</button>
 
@@ -91,84 +91,83 @@ label{
 
 <div id="adminBox">
     <h3>Admin Settings</h3>
-    <p>Bật chỉnh Bank + STK</p>
+    <p>Bật chỉnh Bank & STK</p>
     <button onclick="hideAdmin()">Ẩn Admin</button>
 </div>
 
 <script>
-const passKey = "0546112"; // Pass admin — KHÔNG lưu đâu cả
 
-// Khi nhấn nút bí mật
+const passKey = "0546112";
+
 function enterPass(){
     let p = prompt("Nhập mật khẩu:");
     if(p === passKey){
         alert("Đúng mật khẩu! Bạn có thể chỉnh Bank & STK");
-        document.getElementById("bank").disabled = false;
-        document.getElementById("account").disabled = false;
-        document.getElementById("adminBox").style.display="block";
+        bank.disabled = false;
+        account.disabled = false;
+        adminBox.style.display="block";
     }else{
         alert("Sai mật khẩu!");
-        document.getElementById("bank").disabled = true;
-        document.getElementById("account").disabled = true;
-        document.getElementById("adminBox").style.display="none";
+        bank.disabled = true;
+        account.disabled = true;
+        adminBox.style.display="none";
     }
 }
 
 function hideAdmin(){
-    document.getElementById("adminBox").style.display="none";
+    adminBox.style.display="none";
 }
 
-// Load danh sách ngân hàng từ VietQR
 async function loadBanks(){
     try{
         let res = await fetch("https://api.vietqr.io/v2/banks");
         let js = await res.json();
-        let select = document.getElementById("bank");
         js.data.forEach(b=>{
             let op = document.createElement("option");
             op.value = b.bin;
             op.text = b.short_name + " - " + b.name;
-            select.appendChild(op);
+            bank.appendChild(op);
         });
-        select.value = "970403"; // Sacombank mặc định
+        bank.value = "970403";
     }catch(err){
-        console.error("Không tải được danh sách ngân hàng:", err);
+        console.error("Không tải được danh sách ngân hàng");
     }
 }
 loadBanks();
 
-// Tạo QR
 function createQR(){
     let bank = document.getElementById("bank").value;
     let acc = document.getElementById("account").value.trim();
     let money = document.getElementById("amount").value.trim();
-    let info = document.getElementById("info").value;
-    let name = document.getElementById("name").value;
+    let info = document.getElementById("info").value.trim();
+    let name = document.getElementById("name").value.trim();
 
     let hideAmount = document.getElementById("hideAmount").checked;
     let hideAccount = document.getElementById("hideAccount").checked;
+    let hideInfo = document.getElementById("hideInfo").checked;
 
     if(hideAccount) acc = "";
     if(hideAmount) money = "";
+    if(hideInfo) info = "";
 
-    // Không cho bỏ cả 2
     if(acc === "" && money === ""){
         alert("Không thể bỏ cả số tài khoản và số tiền!");
         return;
     }
 
-    // Chọn compact.png nếu bỏ account hoặc amount
-    let fileType = (hideAccount || hideAmount) ? "compact.png" : "print.png";
+    let fileType = (hideAccount || hideAmount || hideInfo) ? "compact.png" : "print.png";
 
-    let url = `https://img.vietqr.io/image/${bank}-${acc}-${fileType}?addInfo=${encodeURIComponent(info)}&accountName=${encodeURIComponent(name)}`;
+    let url = `https://img.vietqr.io/image/${bank}-${acc}-${fileType}?accountName=${encodeURIComponent(name)}`;
+
     if(money !== "") url += `&amount=${money}`;
+    if(info !== "") url += `&addInfo=${encodeURIComponent(info)}`;
 
     document.getElementById("result").innerHTML =
-        `<img src="${url}" width="400">
-         <br>
-         <a href="${url}" download="vietqr.png">
-            <button>Tải ảnh</button>
-         </a>`;
+    `<img src="${url}" width="420">
+     <br>
+     <a href="${url}" download="vietqr.png">
+        <button>Tải ảnh</button>
+     </a>`;
 }
 </script>
 
