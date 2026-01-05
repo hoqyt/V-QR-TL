@@ -2,87 +2,115 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>VietQR Tool</title>
+<title>VietQR Tool Pro</title>
 
 <style>
 body{
     font-family: Arial;
-    background:#111;
+    background: radial-gradient(circle,#0b1220,#000000);
     color:white;
     text-align:center;
-    position: relative;
-    min-height: 100vh;
+    min-height:100vh;
 }
+
+/* Title */
+h2{
+    margin-top:40px;
+    font-size:26px;
+    letter-spacing:1px;
+}
+
+/* Card */
 .container{
-    width:480px;
-    margin:50px auto;
-    background:#1c1c1c;
-    padding:20px;
-    border-radius:12px;
+    width:520px;
+    margin:20px auto;
+    background:#121826;
+    padding:22px;
+    border-radius:15px;
+    box-shadow:0px 0px 25px rgba(0,255,255,.2);
+    border:1px solid #1f2b44;
 }
+
+/* input */
 input,select{
     width:100%;
-    padding:8px;
-    margin:5px 0;
+    padding:9px;
+    margin:6px 0;
     border-radius:6px;
-    border:none;
-    background:#222;
+    border:1px solid #2e3b56;
+    background:#0d141f;
     color:white;
 }
+
+/* button */
 button{
     padding:10px 15px;
     border-radius:6px;
     border:none;
     cursor:pointer;
     margin-top:10px;
-    background:#00aaff;
+    background:#00b7ff;
     color:white;
+    font-weight:bold;
+    transition:0.2s;
 }
+button:hover{
+    transform:scale(1.05);
+    background:#07e0ff;
+}
+
+/* Admin box */
 #adminBox{
     display:none;
     margin-top:10px;
     padding:10px;
-    background:#222;
+    background:#0f1a2b;
     border-radius:8px;
+    border:1px solid #26344f;
 }
+
+/* Secret */
 #secretBtn{
     position:absolute;
     top:15px;
     right:15px;
-    width:25px;
-    height:25px;
+    width:26px;
+    height:26px;
     background:white;
     border-radius:4px;
     cursor:pointer;
 }
+
+/* QR */
 img{
     margin-top:15px;
     border-radius:10px;
-    max-width: 100%;
+    width:420px;
 }
+
 label{
     display:block;
-    margin-top:5px;
+    margin-top:6px;
     cursor:pointer;
 }
 </style>
 </head>
 <body>
 
-<!-- nút bí mật -->
 <div id="secretBtn" onclick="enterPass()"></div>
 
-<h2>🚀 VietQR Generator</h2>
+<h2>🚀 VietQR Generator — Premium UI</h2>
 
 <div class="container">
 
 <select id="bank" disabled></select>
-<input id="account" disabled placeholder="Số tài khoản" value="054601092000">
+<input id="account" disabled value="054601092000">
 
 <input id="amount" placeholder="Số tiền (vd 300000)">
 <input id="info" placeholder="Nội dung" value="NAP NET">
 <input id="name" placeholder="Tên thụ hưởng" value="HUYNH CHANH THUAT">
 
+<label><input type="checkbox" id="randCode"> Tự tạo nội dung dạng THXXXXX</label>
 <label><input type="checkbox" id="hideAmount"> Ẩn số tiền</label>
 <label><input type="checkbox" id="hideAccount"> Ẩn số tài khoản</label>
 <label><input type="checkbox" id="hideInfo"> Ẩn nội dung</label>
@@ -103,23 +131,23 @@ label{
 
 const passKey = "0546112";
 
-// nhập pass
+/* ---------- ADMIN PASS ---------- */
 function enterPass(){
     let p = prompt("Nhập mật khẩu:");
-    const bank = document.getElementById("bank");
-    const account = document.getElementById("account");
-    const adminBox = document.getElementById("adminBox");
+    let bank = document.getElementById("bank");
+    let acc = document.getElementById("account");
+    let admin = document.getElementById("adminBox");
 
     if(p === passKey){
-        alert("Đúng mật khẩu! Bạn có thể chỉnh Bank & STK");
+        alert("Đúng mật khẩu! Đã mở khóa chỉnh Bank + STK");
         bank.disabled = false;
-        account.disabled = false;
-        adminBox.style.display = "block";
+        acc.disabled = false;
+        admin.style.display = "block";
     }else{
         alert("Sai mật khẩu!");
         bank.disabled = true;
-        account.disabled = true;
-        adminBox.style.display = "none";
+        acc.disabled = true;
+        admin.style.display = "none";
     }
 }
 
@@ -127,7 +155,7 @@ function hideAdmin(){
     document.getElementById("adminBox").style.display="none";
 }
 
-// load danh sách bank
+/* ---------- LOAD BANK LIST ---------- */
 async function loadBanks(){
     try{
         let res = await fetch("https://api.vietqr.io/v2/banks");
@@ -141,51 +169,57 @@ async function loadBanks(){
             bankSelect.appendChild(op);
         });
 
-        bankSelect.value = "970403"; // mặc định Sacombank
-    }
-    catch(err){
-        console.error("Không tải được danh sách ngân hàng", err);
+        bankSelect.value = "970403";
+    }catch(e){
+        console.log("Load bank fail");
     }
 }
 loadBanks();
 
+/* ---------- RANDOM TH CODE ---------- */
+function randomTH(){
+    let chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let out = "";
+    for(let i=0;i<5;i++) out += chars[Math.floor(Math.random()*chars.length)];
+    return "TH" + out;
+}
 
-// tạo qr
+/* ---------- CREATE QR ---------- */
 function createQR(){
-    let bank = document.getElementById("bank").value;
-    let acc = document.getElementById("account").value.trim();
-    let money = document.getElementById("amount").value.trim();
-    let info = document.getElementById("info").value.trim();
-    let name = document.getElementById("name").value.trim();
+    let bank = bankSelect.value;
+    let acc = account.value.trim();
+    let money = amount.value.trim();
+    let info = infoInput.value.trim();
+    let name = nameInput.value.trim();
 
-    let hideAmount = document.getElementById("hideAmount").checked;
-    let hideAccount = document.getElementById("hideAccount").checked;
-    let hideInfo = document.getElementById("hideInfo").checked;
+    let hideAmount = hideAmountChk.checked;
+    let hideAccount = hideAccountChk.checked;
+    let hideInfo = hideInfoChk.checked;
+    let rand = randChk.checked;
 
-    if(hideAccount) acc = "";
+    if(rand) info = randomTH();
     if(hideAmount) money = "";
+    if(hideAccount) acc = "";
     if(hideInfo) info = "";
 
     if(acc === "" && money === ""){
-        alert("Không thể bỏ cả số tài khoản và số tiền!");
+        alert("Không thể bỏ cả STK và số tiền!");
         return;
     }
 
-    let fileType = (hideAccount || hideAmount || hideInfo) ? "compact.png" : "print.png";
+    let fileType = (hideAmount || hideAccount || hideInfo) ? "compact.png" : "print.png";
 
     let url = `https://img.vietqr.io/image/${bank}-${acc}-${fileType}?accountName=${encodeURIComponent(name)}`;
+    if(money) url += `&amount=${money}`;
+    if(info) url += `&addInfo=${encodeURIComponent(info)}`;
 
-    if(money !== "") url += `&amount=${money}`;
-    if(info !== "") url += `&addInfo=${encodeURIComponent(info)}`;
-
-    document.getElementById("result").innerHTML =
-    `<img src="${url}" width="420">
+    result.innerHTML =
+    `<img src="${url}">
      <br>
      <a href="${url}" download="vietqr.png">
-        <button>Tải ảnh</button>
+         <button>Tải ảnh</button>
      </a>`;
 }
-
 </script>
 
 </body>
